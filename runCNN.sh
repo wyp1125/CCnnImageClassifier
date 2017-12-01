@@ -35,10 +35,20 @@ fi
 
 PYTHON3=/usr/bin/python3
 
-echo "Activate tensorflow"
+if ! [ -x "$PYTHON3" ]; then
+  echo "Python3 could not be found!";
+  exit;
+fi
 
 tf_activate=/root/tensorflow/bin/activate
+
+if ! [ -f "$tf_activate" ]; then
+  echo "TensorFlow could not be found!";
+  exit;
+fi
+
 source ${tf_activate}
 
-#echo $json
+echo "Tensorflow is activated!"
+
 ${PYTHON3} train_cnn.py $json

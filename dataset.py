@@ -4,17 +4,14 @@ import glob
 from sklearn.utils import shuffle
 import numpy as np
 
-
 def load_train(train_path, image_size, classes):
     images = []
     labels = []
     img_names = []
     cls = []
 
-    print('Going to read training images')
     for fields in classes:   
         index = classes.index(fields)
-        print('Now going to read {} files (Index: {})'.format(fields, index))
         path = os.path.join(train_path, fields, '*g')
         files = glob.glob(path)
         for fl in files:
@@ -36,9 +33,7 @@ def load_train(train_path, image_size, classes):
 
     return images, labels, img_names, cls
 
-
 class DataSet(object):
-
   def __init__(self, images, labels, img_names, cls):
     self._num_examples = images.shape[0]
 
@@ -74,12 +69,10 @@ class DataSet(object):
     return self._epochs_done
 
   def next_batch(self, batch_size):
-    """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
     self._index_in_epoch += batch_size
 
     if self._index_in_epoch > self._num_examples:
-      # After each epoch we update this
       self._epochs_done += 1
       start = 0
       self._index_in_epoch = batch_size
@@ -87,7 +80,6 @@ class DataSet(object):
     end = self._index_in_epoch
 
     return self._images[start:end], self._labels[start:end], self._img_names[start:end], self._cls[start:end]
-
 
 def read_train_sets(train_path, image_size, classes, validation_size):
   class DataSets(object):

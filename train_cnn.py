@@ -7,6 +7,7 @@ import json
 from datetime import timedelta
 import math
 import random
+import logging
 import numpy as np
 from layer_function import create_flatten_layer,create_weights,create_biases,create_convolutional_layer,create_fc_layer
 
@@ -20,19 +21,42 @@ if len(sys.argv)<2:
     print("python3 train_cnn.py json_file")
     quit
 
-#load model configuration from json file
-mdata = json.load(open(sys.argv[1]))
+#Read configuration json file
+mdata=json.load(open(sys.argv[1]))
+
+#Specify logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+#Specify logging to the screen
+ch=logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+#Make running directory
+run_dir=mdata["train"]["run_dir"]
+if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
+
+#Specify logging to a file under running directory
+fh=logging.FileHandler(run_dir+"/run.log")
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
+logger.info('CCnnImageClassifier Author: Yupeng Wang')
+
+#Take in training parameters from the json file
+logger.info('Process configurations and input data')
 batch_size=int(mdata["train"]["batch_size"])
 classes=list(mdata["classes"].keys())
 num_classes=len(classes)
 validation_size=mdata["train"]["validation_size"]
 img_size=mdata["train"]["img_size"]
 num_channels=mdata["train"]["channel"]
-#make running directory
-run_dir=mdata["train"]["run_dir"]
-if not os.path.exists(run_dir):
-        os.makedirs(run_dir)
-#copy training data to the running directory
+
+#Copy training data to the 'training_data' folder under running directory
 trn_dat_dir=run_dir+"/"+"training_data"
 if not os.path.exists(trn_dat_dir):
         os.makedirs(trn_dat_dir)
@@ -44,16 +68,17 @@ for cls in classes:
 
 # Load all the training and validation images and labels into memory using openCV and use that during training
 data = dataset.read_train_sets(trn_dat_dir, img_size, classes, validation_size=validation_size)
-print("Complete reading input data. Will Now print a snippet of it")
-print("Number of files in Training-set:\t\t{}".format(len(data.train.labels)))
-print("Number of files in Validation-set:\t{}".format(len(data.valid.labels)))
+logger.info("Complete processing input data:")
+logger.info("Number of files in Training-set:\t{}".format(len(data.train.labels)))
+logger.info("Number of files in Validation-set:\t{}".format(len(data.valid.labels)))
 
 # Declare placeholders
 x = tf.placeholder(tf.float32, shape=[None, img_size,img_size,num_channels], name='x')
 y_true = tf.placeholder(tf.float32, shape=[None, num_classes], name='y_true')
 y_true_cls = tf.argmax(y_true, dimension=1)
 
-#Create neural networks
+# Create neural networks according to the json file
+logger.info("Create neural networks according to configuration json file")
 layers=mdata["model"].keys()
 current_layer=""
 ordered_layer=[]
@@ -71,7 +96,7 @@ for i in range(len(layers)-1):
 n=0
 for layer in ordered_layer:
     if n==0:
-        print("Layer: "+layer)
+        logger.info("Layer: "+layer)
         if mdata["model"][layer]["type"]=="flatten":
             nn_model=create_flatten_layer(x)
         elif mdata["model"][layer]["type"]=="convolutional":
@@ -83,12 +108,12 @@ for layer in ordered_layer:
                             pooling=mdata["model"][layer]["pooling"],
                             win_strd_size=mdata["model"][layer]["win_strd_size"])
         else:
-            print("The first layer type must be flatten or convolutional")
+            logger.error("The first layer type must be flatten or convolutional")
             quit()
     else:
         shape=nn_model.get_shape().as_list()
-        print("Shape: "+str(shape))
-        print("Layer: "+layer)
+        logger.info("Shape: "+str(shape))
+        logger.info("Layer: "+layer)
         if mdata["model"][layer]["type"]=="flatten":
             nn_model=create_flatten_layer(nn_model)
         elif mdata["model"][layer]["type"]=="convolutional":
@@ -107,7 +132,7 @@ for layer in ordered_layer:
             try:
                 n_outputs=mdata["model"][layer]["num_outputs"]
             except KeyError:
-                n_outputs=num_classes #if no n_outputs is supplied, assume the readout layer
+                n_outputs=num_classes #if no n_outputs is supplied, assume this is the final readout layer
             try:
                 dropout=mdata["model"][layer]["dropout"]
             except KeyError:
@@ -122,11 +147,11 @@ for layer in ordered_layer:
                             dropout=dropout,
                             activation=activation)
         else:
-            print("Hidden types must be flatten, fc or convolutional")
+            logger.error("Hidden types must be flatten, fc or convolutional")
             quit()
     n=n+1
 shape=nn_model.get_shape().as_list()
-print("Shape: "+str(shape))
+logger.info("Shape: "+str(shape))
 
 y_pred=tf.nn.softmax(nn_model,name='y_pred')
 y_pred_cls=tf.argmax(y_pred, dimension=1)
@@ -140,26 +165,25 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 session = tf.Session()
 session.run(tf.global_variables_initializer()) 
 
-
-def show_progress(epoch, feed_dict_train, feed_dict_validate, val_loss):
+#Display training  progress
+def show_progress(epoch,total_epoch, feed_dict_train, feed_dict_validate, val_loss):
     acc = session.run(accuracy, feed_dict=feed_dict_train)
     val_acc = session.run(accuracy, feed_dict=feed_dict_validate)
-    msg = "Training Epoch {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%},  Validation Loss: {3:.3f}"
-    print(msg.format(epoch + 1, acc, val_acc, val_loss))
+    msg = "Training Epoch {0} of {4} - Training Accuracy:{1:>6.1%}, Validation Accuracy:{2:>6.1%}, Validation Loss: {3:.3f}"
+    logger.info(msg.format(epoch + 1, acc, val_acc, val_loss,total_epoch+1))
 
 total_iterations = 0
 
 saver = tf.train.Saver()
 def train(num_iteration):
     global total_iterations
-    
+    total_epoch=int( num_iteration / int(data.train.num_examples/batch_size))
     for i in range(total_iterations,
                    total_iterations + num_iteration):
 
         x_batch, y_true_batch, _, cls_batch = data.train.next_batch(batch_size)
         x_valid_batch, y_valid_batch, _, valid_cls_batch = data.valid.next_batch(batch_size)
-
-        
+       
         feed_dict_tr = {x: x_batch,
                            y_true: y_true_batch}
         feed_dict_val = {x: x_valid_batch,
@@ -171,10 +195,12 @@ def train(num_iteration):
             val_loss = session.run(cost, feed_dict=feed_dict_val)
             epoch = int(i / int(data.train.num_examples/batch_size))    
             
-            show_progress(epoch, feed_dict_tr, feed_dict_val, val_loss)
+            show_progress(epoch, total_epoch,feed_dict_tr, feed_dict_val, val_loss)
             saver.save(session, run_dir+"/"+mdata["train"]["model_name"]) 
-
 
     total_iterations += num_iteration
 
 train(num_iteration=mdata["train"]["num_iterations"])
+logger.info("Complete running!")
+ch.close()
+fh.close()
