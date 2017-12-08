@@ -50,7 +50,8 @@ logger.info('CCnnImageClassifier Author: Yupeng Wang')
 #Take in training parameters from the json file
 logger.info('Process configurations and input data')
 batch_size=int(mdata["train"]["batch_size"])
-classes=list(mdata["classes"].keys())
+classes=sorted(list(mdata["classes"].keys()))
+logger.info("Classes:"+str(classes))
 num_classes=len(classes)
 validation_size=mdata["train"]["validation_size"]
 img_size=mdata["train"]["img_size"]

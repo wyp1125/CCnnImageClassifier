@@ -1,18 +1,18 @@
 {
     "classes":{
-        "dogs":"/home/ywang/image_recognition/tutorial-2-image-classifier/training_data/dogs",
-        "cats":"/home/ywang/image_recognition/tutorial-2-image-classifier/training_data/cats",
-        "cows":"/home/ywang/image_recognition/tutorial-2-image-classifier/training_data/cows"},
+        "dogs":"/home/yupeng/bdx/image_recognition/cCNNImageClassifier_dev/training_data/dogs",
+        "cats":"/home/yupeng/bdx/image_recognition/cCNNImageClassifier_dev/training_data/cats",
+        "cows":"/home/yupeng/bdx/image_recognition/cCNNImageClassifier_dev/training_data/cows"},
     "train":{
         "validation_size":0.2,
         "batch_size":32,
         "img_size":128,
         "channel":3,
-        "run_dir":"/home/ywang/image_recognition/tutorial-2-image-classifier/run2",
+        "run_dir":"/home/yupeng/bdx/image_recognition/cCNNImageClassifier_dev/run1",
         "learning_rate":0.0001,
         "num_iterations":3000,
         "optimizer":"Adam",
-        "model_name":"cat_doc_classifier"},
+        "model_name":"cat_doc_cow_classifier"},
     "model":{
         "cv1":{
             "type":"convolutional",
