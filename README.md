@@ -1,7 +1,7 @@
 # cCNN-Image-Classifier
 Configurable Convolutional Neural Networks for Image Classification.
 
-The programs in this package preprocess images using CV2, and build image classifiers and then classify images using Convolutional Neural Network (CNN). The CNN model can be conviniently specified using a "json" file. 
+The programs in this package preprocess images using CV2, and build image classifiers and then classify images using Convolutional Neural Network (CNN). The CNN model can be conveniently specified using a "json" file. 
 
 Datasets
 Selected classes of images obtained from the links provided by ImageNet. For each class, several hundreds of images are needed for training the CNN model. Each class should use a separate folder. The image files must be in "jpg" format.
