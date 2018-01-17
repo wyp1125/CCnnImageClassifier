@@ -13,9 +13,9 @@ Programs
 All programs should be executed using command lines with arguments. To learn how to feed arguments, just execute the programs without any argument.
 
 Image downloading and preprocessing
-1) batch_image_download.py
+1) batch_image_download.py.
 A "url" file should be first obtained from the ImageNet website. The "url" file is in the format of "groupid_imageid url". This program downloads the images for a group id according to the "url" file.
-2) filter_images.py
+2) filter_images.py.
 This program filters the downloaded images according to image sizes and channels.
 
 Build the CNN model using the wrapper script "runCNN.sh".
