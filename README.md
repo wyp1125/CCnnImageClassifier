@@ -7,7 +7,7 @@ Datasets
 Selected classes of images obtained from the links provided by ImageNet. For each class, several hundreds of images are needed for training the CNN model. Each class should use a separate folder. The image files must be in "jpg" format.
 
 Configuration json file
-Contains the paths of image folders for training the CNN model, and configurations of the CNN model.
+Contains the paths of image folders for training the CNN model, and configurations of the CNN model. RNN model was also added (see input3.json).
 
 Programs
 All programs should be executed using command lines with arguments. To learn how to feed arguments, just execute the programs without any argument.

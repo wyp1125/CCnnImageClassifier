@@ -9,7 +9,7 @@ import math
 import random
 import logging
 import numpy as np
-from layer_function import create_flatten_layer,create_weights,create_biases,create_convolutional_layer,create_fc_layer
+from layer_function import create_flatten_layer,create_weights,create_biases,create_convolutional_layer,create_fc_layer,create_rnn_layer
 
 #Adding Seed so that random initialization is consistent
 from numpy.random import seed
@@ -147,8 +147,18 @@ for layer in ordered_layer:
                             num_outputs=n_outputs,
                             dropout=dropout,
                             activation=activation)
+        elif mdata["model"][layer]["type"]=="rnn":
+            try:
+                n_outputs=mdata["model"][layer]["num_outputs"]
+            except KeyError:
+                n_outputs=num_classes #if no n_outputs is supplied, assume this is the final readout layer
+            nn_model=create_rnn_layer(input=nn_model,
+                            num_hidden=mdata["model"][layer]["hidden_features"],
+                            num_classes=n_outputs,
+                            timesteps=mdata["model"][layer]["timesteps"],
+                            forget_bias=mdata["model"][layer]["forget_bias"])
         else:
-            logger.error("Hidden types must be flatten, fc or convolutional")
+            logger.error("Hidden types must be flatten, fc, rnn or convolutional")
             quit()
     n=n+1
 shape=nn_model.get_shape().as_list()
@@ -165,7 +175,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 session = tf.Session()
 session.run(tf.global_variables_initializer()) 
-
 #Display training  progress
 def show_progress(epoch,total_epoch, feed_dict_train, feed_dict_validate, val_loss):
     acc = session.run(accuracy, feed_dict=feed_dict_train)
